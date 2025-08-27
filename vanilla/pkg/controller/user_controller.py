@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from vanilla.pkg.models.user_model import User
 from vanilla.pkg.utils.hash import hash_password, verify_password
-from vanilla.pkg.schemas.user_schema import UserCreate, UserResponse, UserLogin, UserLoginResponse
+from vanilla.pkg.schemas.user_schema import UserCreate, UserResponse, UserLogin, UserLoginResponse, EditUser
 
 
 def create_user(db: Session, user: UserCreate):
@@ -45,8 +45,8 @@ def user_login(db: Session, login_payload: UserLogin):
   existing_user = db.query(User).filter(User.username == login_payload.username).first()
   if not existing_user:
     raise HTTPException(
-      status_code=status.HTTP_400_BAD_REQUEST,
-      detail="User not existed"
+      status_code=status.HTTP_404_NOT_FOUND,
+      detail="User not found"
     )
 
   is_password_match = verify_password(login_payload.password, existing_user.password)
@@ -61,3 +61,54 @@ def user_login(db: Session, login_payload: UserLogin):
     status="success",
     data=existing_user
   )
+
+def get_user(db: Session, user_id: str):
+  existing_user = db.query(User).filter(User.id == user_id).first()
+  if not existing_user:
+    raise HTTPException(
+      status_code=status.HTTP_404_NOT_FOUND,
+      detail="User not found"
+    )
+  
+  return UserResponse(
+    status="success",
+    message="User fetched successfully",
+    data=existing_user
+  )
+
+def update_user(db: Session, user_id: str, edit_user_payload: EditUser):
+  existing_user = db.query(User).filter(User.id == user_id).first()
+  if not existing_user:
+    raise HTTPException(
+      status_code=status.HTTP_404_NOT_FOUND,
+      detail="User not found"
+    )
+  
+  existing_user.role = edit_user_payload.role
+  existing_user.password = edit_user_payload.password
+
+  db.commit()
+  db.refresh(existing_user)
+
+  return UserResponse(
+    status="success",
+    message="User updated successfully",
+    data=existing_user
+  )
+  
+def delete_user(db: Session, user_id: str):
+    existing_user = db.query(User).filter(User.id == user_id).first()
+    if not existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    db.delete(existing_user)
+    db.commit()
+
+    return UserResponse(
+        status="success",
+        message="User deleted successfully",
+        data=existing_user
+    )

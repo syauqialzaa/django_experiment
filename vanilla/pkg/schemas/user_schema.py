@@ -7,6 +7,7 @@ class UserRole(str, Enum):
   patient = "patient"
   doctor = "doctor"
   administrator = "administrator"
+  
 class UserCreate(BaseModel):
   username: str
   email: EmailStr

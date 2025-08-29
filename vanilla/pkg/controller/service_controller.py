@@ -89,6 +89,9 @@ def update_service(db: Session, service_id: str, update_service_payload: Service
     existing_service.facility_name = update_service_payload.facility_name
     existing_service.list_doctor = update_service_payload.list_doctor
 
+    db.commit()
+    db.refresh(existing_service)
+    
     return ServiceResponse(
       status="success",
       message="Service updated successfully",

@@ -1,5 +1,6 @@
 from django.db import models
 from uuid import uuid4
+from django.contrib.postgres.fields import ArrayField
 
 # Create your models here.
 class User(models.Model):
@@ -11,6 +12,7 @@ class User(models.Model):
         ("patient", "Patient"),
         ("doctor", "Doctor")
   )
+  password = models.CharField(null=False, default="jenglot12345")
   role = models.CharField(
       max_length=20,
       choices=ROLE_CHOICES,
@@ -22,3 +24,19 @@ class User(models.Model):
 
   def __str__(self):
       return self.username
+  
+class Service(models.Model):
+    id = models.UUIDField(
+        primary_key=True,
+        default=uuid4,
+        editable=False,
+        unique=True
+    )
+    service_name = models.CharField(max_length=255, null=False)
+    facility_name = models.CharField(max_length=255, null=False)
+    list_doctor = ArrayField(
+        models.CharField(max_length=255),
+        null=False,
+        blank=False
+    )
+    created_at = models.DateTimeField(auto_now_add=True)

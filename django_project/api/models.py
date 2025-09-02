@@ -40,3 +40,32 @@ class Service(models.Model):
         blank=False
     )
     created_at = models.DateTimeField(auto_now_add=True)
+
+class Appointment(models.Model):
+    class AppointmentStatus(models.TextChoices):
+        SCHEDULED = "scheduled", "Scheduled"
+        COMPLETED = "completed", "Completed"
+        CANCELLED = "cancelled", "Cancelled"
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False, unique=True)
+    patient = models.ForeignKey(
+        "User", on_delete=models.CASCADE, related_name="patient_appointments"
+    )
+    doctor = models.ForeignKey(
+        "User", on_delete=models.CASCADE, related_name="doctor_appointments"
+    )
+    service = models.ForeignKey(
+        "Service", on_delete=models.CASCADE, related_name="appointments"
+    )
+
+    appointment_time = models.DateTimeField(null=False)
+    status = models.CharField(
+        max_length=20,
+        choices=AppointmentStatus.choices,
+        default=AppointmentStatus.SCHEDULED,
+    )
+    notes = models.TextField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    

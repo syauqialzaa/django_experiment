@@ -2,8 +2,8 @@ from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import User, Service
-from .serializers import UserSerializer, ServiceSerializer
+from .models import User, Service, Appointment
+from .serializers import UserSerializer, ServiceSerializer, AppointmentSerializer
 from django.contrib.auth.hashers import make_password, check_password
 
 # Create your views here.
@@ -210,3 +210,76 @@ class ServiceDetailView(APIView):
         "message": f"Failed to update service: {str(e)}"
       }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
   
+class AppointmentBook(APIView):
+  def post(self, request):
+    try:
+      serializer = AppointmentSerializer(data=request.data)
+
+      if serializer.is_valid():
+        serializer.save()
+        return Response({
+          "status": "success",
+          "message": "Appointment created successfully",
+          "data": serializer.data
+        }, status=status.HTTP_201_CREATED)
+      
+      return Response({
+        "status": "failed",
+        "message": "Invalid appointment data",
+        "errors": serializer.errors
+    }, status=status.HTTP_400_BAD_REQUEST)
+    
+    except Exception as e:
+      return Response({
+        "status": "failed",
+        "message": f"Failed to create appointment: {str(e)}"
+      }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+  def get(self, request):
+    try:
+      appointments = Appointment.objects.all()
+      serializer = AppointmentSerializer(appointments, many=True)
+
+      return Response({
+        "status": "success",
+        "message": "Appointments fetched successfully",
+        "data": serializer.data
+      }, status=status.HTTP_200_OK)
+    
+    except Exception as e:
+      return Response({
+        "status": "failed",
+        "message": f"Failed to fetch appointments: {str(e)}"
+      }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+class AppointmentCancel(APIView):
+  def post(self, request, appointment_id):
+    try:
+      appointment = get_object_or_404(Appointment, id=appointment_id)
+
+      serializer = AppointmentSerializer(
+        appointment, 
+        data={"status":"cancelled"}, 
+        partial=True
+      )
+
+      if serializer.is_valid():
+        serializer.save()
+
+        return Response({
+          "status": "success",
+          "message": "Appointment cancel successfully",
+          "data": serializer.data
+        }, status=status.HTTP_200_OK)
+      
+      return Response({
+        "status": "failed",
+        "message": "Failed to cancel appointment",
+        "data": serializer.errors
+      }, status=status.HTTP_200_OK)
+    
+    except Exception as e:
+      return Response({
+        "status": "failed",
+        "message": f"Failed to cancel appointment: {str(e)}",
+      }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
